@@ -10,10 +10,18 @@ options.setPreference("browser.download.folderList",2)
 options.setPreference("browser.download.manager.showWhenStarting",false)
 options.setPreference("browser.download.dir",downloadFilepath)
 options.setPreference("browser.helperApps.neverAsk.saveToDisk",'application/xlsx')
-let driver =  new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
-const actions = driver.actions();
+// let driver =  new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
+// const actions = driver.actions();
 const fs = require('fs');
 const path = require('path');
+let Client = require('ssh2-sftp-client');
+const sftphost = 'test.rebex.net';
+const sftpport = 22;
+const sftpusername = 'demo';
+const sftppassword = 'password';
+const sftplocalRute = '/ruta/al/archivo/local.txt';
+const sftpremoteRute = '/ruta/en/el/servidor/archivo.txt';
+
 async function navLogin(){
   await driver.findElement(By.xpath('/html/body/div[1]/div[1]/div[5]/div/form/input[3]')).sendKeys('rpafogo');
   await driver.findElement(By.xpath('/html/body/div[1]/div[1]/div[5]/div/form/input[4]')).sendKeys('mmh');
@@ -263,7 +271,25 @@ function emptyFolder(ruta) {
     console.log(`La carpeta "${ruta}" no existe.`);
   }
 }
+async function uploadFileSFTP() {
+  const sftp = new Client();
+  try {    
+    await sftp.connect({
+      host: sftphost,
+      port: sftpport,
+      username: sftpusername,
+      password: sftppassword
+    });
+    // await sftp.put(sftplocalRute, sftpremoteRute);
+    // console.log(`Archivo subido con éxito a ${rutaRemota}`);
+  } catch (error) {
+    console.error(`Error al subir el archivo: ${error.message}`);
+  } finally {    
+    sftp.end();
+  }
+}
+// emptyFolder(downloadFilepath)
 
-emptyFolder(downloadFilepath)
-generateReports()
+// generateReports()
 
+uploadFileSFTP()
