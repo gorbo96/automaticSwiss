@@ -4,14 +4,14 @@ const ExcelJS = require('exceljs');
 const options= new firefox.Options()
 const downloadFilepath = "C:\\RPA\\reports\\"
 const ipadd = "http://10.163.132.13/"
-options.addArguments('-headless')
+// options.addArguments('-headless')
 // options.addArguments('-private')
 options.setPreference("browser.download.folderList",2)
 options.setPreference("browser.download.manager.showWhenStarting",false)
 options.setPreference("browser.download.dir",downloadFilepath)
 options.setPreference("browser.helperApps.neverAsk.saveToDisk",'application/xlsx')
-// let driver =  new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
-// const actions = driver.actions();
+let driver =  new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
+const actions = driver.actions();
 const fs = require('fs');
 const path = require('path');
 let Client = require('ssh2-sftp-client');
@@ -19,9 +19,6 @@ const sftphost = 'test.rebex.net';
 const sftpport = 22;
 const sftpusername = 'demo';
 const sftppassword = 'password';
-const sftplocalRute = '/ruta/al/archivo/local.txt';
-const sftpremoteRute = '/ruta/en/el/servidor/archivo.txt';
-
 async function navLogin(){
   await driver.findElement(By.xpath('/html/body/div[1]/div[1]/div[5]/div/form/input[3]')).sendKeys('rpafogo');
   await driver.findElement(By.xpath('/html/body/div[1]/div[1]/div[5]/div/form/input[4]')).sendKeys('mmh');
@@ -72,6 +69,9 @@ async function navHome(){
 
 async function navWkReport(){
   //reporte semanal
+  const selectRevenue = await driver.findElement(By.id('revenueCenterData'))
+  select = new Select(selectRevenue)
+  await select.selectByValue('23702')
   await driver.findElement(By.id('calendarBtn')).click()
   const frameCalendar=driver.findElement(By.id('calendarFrame'))
   await driver.switchTo().frame(frameCalendar)
@@ -160,6 +160,18 @@ async function generateReports() {
       await transformReportDailyServPerf()
       await navReportMixItems()
       await navWkReport()
+      await transformReportDailyMixItem()
+      await navHome()
+      await navReportDailyOps()
+      await navDailyReport()
+      await navHome()
+      await transformReportDailyOps()
+      await navReportPerfSumm()
+      await navDailyReport()
+      await navHome()
+      await transformReportDailyServPerf()
+      await navReportMixItems()
+      await navDailyReport()
       await transformReportDailyMixItem()
     }else{
       await navReportDailyOps()
@@ -271,25 +283,22 @@ function emptyFolder(ruta) {
     console.log(`La carpeta "${ruta}" no existe.`);
   }
 }
-async function uploadFileSFTP() {
+async function uploadFileSFTP(filename) {
   const sftp = new Client();
   try {    
     await sftp.connect({
-      host: sftphost,
-      port: sftpport,
-      username: sftpusername,
-      password: sftppassword
+      host: '',
+      port: 22,
+      username: '',
+      password: ''
     });
-    // await sftp.put(sftplocalRute, sftpremoteRute);
-    // console.log(`Archivo subido con éxito a ${rutaRemota}`);
+    await sftp.put(downloadFilepath+filename, "/"+filename);
+    console.error(`Archivo ${filename} subido correctamente`);
   } catch (error) {
     console.error(`Error al subir el archivo: ${error.message}`);
   } finally {    
     sftp.end();
   }
 }
-// emptyFolder(downloadFilepath)
-
-// generateReports()
-
-uploadFileSFTP()
+emptyFolder(downloadFilepath)
+generateReports()
